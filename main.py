@@ -1,73 +1,64 @@
 """
-Pocket Option WebSocket Test for Railway - CORRECTED
+Eagle Lenz - Quotex Connection Test for Railway
 """
 
 import asyncio
-from pocketoptionapi_async import AsyncPocketOptionClient
+import os
+from pyquotex.stable_api import Quotex
 
-# Your SSID
-SSID = '42["auth",{"session":"90dcda6b139fe52217664e80d6930ace","isDemo":1,"uid":88209425,"platform":2,"isFastHistory":true,"isOptimized":true}]'
+# Get credentials from environment variables (set these in Railway)
+QUOTEX_EMAIL = os.environ.get("QUOTEX_EMAIL", "your_email@example.com")
+QUOTEX_PASSWORD = os.environ.get("QUOTEX_PASSWORD", "your_password")
 
-async def test():
+async def test_quotex():
     print("=" * 60)
-    print("Pocket Option WebSocket Test on Railway")
+    print("Eagle Lenz - Quotex Connection Test")
     print("=" * 60)
     
-    try:
-        print("\n[1] Creating client...")
-        client = AsyncPocketOptionClient(ssid=SSID)
-        print("   ✅ Client created")
+    print("\n[1] Creating Quotex client...")
+    client = Quotex(email=QUOTEX_EMAIL, password=QUOTEX_PASSWORD, lang="en")
+    print("   ✅ Client created")
+    
+    print("\n[2] Connecting to Quotex...")
+    check, message = await client.connect()
+    
+    if check:
+        print("   ✅ Connected to Quotex!")
         
-        print("\n[2] Connecting to Pocket Option...")
-        await client.connect()
-        print("   ✅ Connected!")
-        
-        print("\n[3] Testing candle fetch...")
-        
-        # Try different method signatures
-        # Method 1: positional arguments (asset, timeframe, count)
+        print("\n[3] Getting account balance...")
         try:
-            candles = await client.get_candles("EURUSD_otc", 60, 10)
-            print(f"   ✅ Got {len(candles)} candles (positional args)")
-            print(f"   Latest candle: {candles[-1] if candles else 'None'}")
-        except TypeError as e:
-            print(f"   ⚠️ Positional args failed: {e}")
-            
-            # Method 2: try with different parameter names
-            try:
-                candles = await client.get_candles(asset="EURUSD_otc", size=10, timeframe=60)
-                print(f"   ✅ Got {len(candles)} candles (asset, size, timeframe)")
-            except TypeError as e2:
-                print(f"   ⚠️ Named args failed: {e2}")
-                
-                # Method 3: try the sync version
-                try:
-                    from pocketoptionapi_async import PocketOptionClient
-                    sync_client = PocketOptionClient(ssid=SSID)
-                    sync_client.connect()
-                    candles = sync_client.get_candles("EURUSD_otc", 60, 10)
-                    print(f"   ✅ Got {len(candles)} candles (sync client)")
-                    await sync_client.disconnect()
-                except Exception as e3:
-                    print(f"   ❌ All methods failed: {e3}")
+            balance = client.get_balance()
+            print(f"   ✅ Balance: ${balance}")
+        except Exception as e:
+            print(f"   ⚠️ Could not get balance: {e}")
         
-        print("\n[4] Keeping connection alive for 30 seconds...")
-        for i in range(6):
-            await asyncio.sleep(5)
-            print(f"   Still connected... {i+1}/6")
+        print("\n[4] Getting all assets...")
+        assets = client.get_all_asset_name()
+        print(f"   ✅ Found {len(assets)} assets")
+        print(f"   First 10 assets: {assets[:10]}")
         
-        print("\n[5] Disconnecting...")
-        await client.disconnect()
+        print("\n[5] Testing candle fetch...")
+        if assets:
+            test_asset = assets[0]
+            candles = client.get_candles(test_asset, period=60, count=10)
+            print(f"   ✅ Got {len(candles)} candles for {test_asset}")
+            if candles:
+                print(f"   Latest candle: {candles[-1]}")
+        
+        print("\n[6] Disconnecting...")
+        await client.close()
         print("   ✅ Disconnected")
         
         print("\n" + "=" * 60)
-        print("🎉 Test complete!")
+        print("🎉 QUOTEX IS WORKING!")
+        print("   Eagle Lenz can be built on Quotex.")
         print("=" * 60)
+        return True
         
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
+    else:
+        print(f"   ❌ Connection failed: {message}")
+        print("\n⚠️ Check your credentials and try again.")
+        return False
 
-if __name__ == "__main__":
-    asyncio.run(test())
+if __name__ "__main__":
+    asyncio.run(test_quotex())
