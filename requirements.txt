@@ -1,1 +1,8 @@
-pocketoptionapi-async
+pyquotex
+pandas
+numpy
+fastapi
+uvicorn
+python-dotenv
+websockets
+httpx
