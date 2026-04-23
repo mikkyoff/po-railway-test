@@ -60,5 +60,5 @@ async def test_quotex():
         print("\n⚠️ Check your credentials and try again.")
         return False
 
-if __name__ "__main__":
+if __name__ == "__main__":
     asyncio.run(test_quotex())
